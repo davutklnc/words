@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>German Vocabulary Cards</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 100%;
+            margin: 0;
+            padding: 10px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #3a66b7;
+            color: white;
+            border-radius: 8px;
+        }
+        .instructions {
+            background-color: #fff;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+            padding: 15px;
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-3px);
+        }
+        .word {
+            font-weight: bold;
+            font-size: 1.2em;
+            color: #3a66b7;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+            margin-bottom: 8px;
+        }
+        .example {
+            color: #555;
+            font-style: italic;
+            margin-top: 10px;
+        }
+        .example-number {
+            display: inline-block;
+            width: 20px;
+            color: #3a66b7;
+            font-weight: bold;
+        }
+        #fileInput {
+            display: none;
+        }
+        .upload-btn {
+            background-color: #3a66b7;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .action-buttons {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        .clear-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #cardsContainer {
+            margin-top: 20px;
+        }
+        .no-cards {
+            text-align: center;
+            padding: 30px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .sample-btn {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>German Vocabulary Cards</h1>
+    </div>
+
+    <div class="instructions">
+        <p>Upload a CSV file with German vocabulary. Format: <br>
+        <code>word with forms, Example sentence 1. Example sentence 2.</code></p>
+    </div>
+
+    <div class="action-buttons">
+        <button class="upload-btn" onclick="document.getElementById('fileInput').click()">Upload CSV File</button>
+        <input type="file" id="fileInput" accept=".csv,.txt" onchange="handleFileUpload(event)">
+        <button class="clear-btn" onclick="clearCards()">Clear Cards</button>
+        <button class="sample-btn" onclick="loadSampleData()">Load Sample Data</button>
+    </div>
+
+    <div id="cardsContainer" class="no-cards">
+        <p>Upload a CSV file to see vocabulary cards</p>
+    </div>
+
+    <script>
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                processCSVData(content);
+            };
+            reader.readAsText(file);
+        }
+
+        function processCSVData(csv) {
+            // Split the CSV by lines
+            const lines = csv.split('\n').filter(line => line.trim() !== '');
+            
+            // Clear previous cards
+            const cardsContainer = document.getElementById('cardsContainer');
+            cardsContainer.innerHTML = '';
+            cardsContainer.className = '';
+
+            if (lines.length === 0) {
+                cardsContainer.innerHTML = '<p>No data found in the CSV file</p>';
+                cardsContainer.className = 'no-cards';
+                return;
+            }
+
+            // Process each line
+            lines.forEach(line => {
+                createCard(line);
+            });
+        }
+
+        function createCard(line) {
+            // Find the first comma
+            const firstCommaIndex = line.indexOf(',');
+            
+            if (firstCommaIndex === -1) {
+                // If no comma is found, use the whole line as the word
+                createCardElement(line.trim(), "");
+                return;
+            }
+            
+            // Split the line into word and examples
+            const word = line.substring(0, firstCommaIndex).trim();
+            let examples = line.substring(firstCommaIndex + 1).trim();
+            
+            createCardElement(word, examples);
+        }
+
+        function createCardElement(word, exampleText) {
+            const cardsContainer = document.getElementById('cardsContainer');
+            
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            const wordElement = document.createElement('div');
+            wordElement.className = 'word';
+            wordElement.textContent = word;
+            card.appendChild(wordElement);
+            
+            // Process examples (numbered with periods)
+            if (exampleText) {
+                const examplesElement = document.createElement('div');
+                examplesElement.className = 'example';
+                
+                // Find and format numbered examples (1., 2., etc.)
+                let formattedExample = exampleText;
+                const regex = /(\d+\.)/g;
+                let examples = exampleText.split(regex).filter(part => part.trim() !== '');
+                
+                if (examples.length > 1) {
+                    for (let i = 0; i < examples.length; i += 2) {
+                        if (i+1 < examples.length) {
+                            const exampleNumber = document.createElement('span');
+                            exampleNumber.className = 'example-number';
+                            exampleNumber.textContent = examples[i];
+                            
+                            const exampleContent = document.createElement('span');
+                            exampleContent.textContent = examples[i+1];
+                            
+                            const exampleWrapper = document.createElement('div');
+                            exampleWrapper.appendChild(exampleNumber);
+                            exampleWrapper.appendChild(exampleContent);
+                            
+                            examplesElement.appendChild(exampleWrapper);
+                        }
+                    }
+                } else {
+                    examplesElement.textContent = exampleText;
+                }
+                
+                card.appendChild(examplesElement);
+            }
+            
+            cardsContainer.appendChild(card);
+        }
+
+        function clearCards() {
+            const cardsContainer = document.getElementById('cardsContainer');
+            cardsContainer.innerHTML = '<p>Upload a CSV file to see vocabulary cards</p>';
+            cardsContainer.className = 'no-cards';
+            document.getElementById('fileInput').value = '';
+        }
+
+        function loadSampleData() {
+            const sampleData = 
+`der Auftrag, Â¨-e 1. Ich komme im Auftrag von Frau Müller und soll Ihnen diesen Brief geben. 2. Im Moment hat die Firma besonders viele Aufträge.
+auftreten, tritt auf, trat auf, ist aufgetreten Nächste Woche tritt in der Stadthalle eine berühmte Musikgruppe auf.
+die Krankheit, -en Ich bin krank und gehe zum Arzt. Ich hoffe, dass meine Krankheit nicht schlimm ist.
+der Termin, -e 1. Ich habe morgen einen Termin beim Zahnarzt. 2. Wir müssen einen neuen Termin für das Meeting vereinbaren.`;
+            
+            processCSVData(sampleData);
+        }
+
+        // Load sample data when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSampleData();
+        });
+    </script>
+</body>
+</html>
