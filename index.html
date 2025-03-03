@@ -57,10 +57,23 @@
             color: #3a66b7;
             font-weight: bold;
         }
-        #fileInput {
-            display: none;
+        .textarea-container {
+            margin-bottom: 15px;
         }
-        .upload-btn {
+        #csvData {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+        .action-buttons {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        .process-btn {
             background-color: #3a66b7;
             color: white;
             border: none;
@@ -69,10 +82,6 @@
             cursor: pointer;
             margin-right: 10px;
         }
-        .action-buttons {
-            display: flex;
-            margin-bottom: 15px;
-        }
         .clear-btn {
             background-color: #e74c3c;
             color: white;
@@ -80,6 +89,15 @@
             padding: 10px 15px;
             border-radius: 5px;
             cursor: pointer;
+        }
+        .sample-btn {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: auto;
         }
         #cardsContainer {
             margin-top: 20px;
@@ -91,15 +109,6 @@
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        .sample-btn {
-            background-color: #27ae60;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-left: auto;
-        }
     </style>
 </head>
 <body>
@@ -108,32 +117,32 @@
     </div>
 
     <div class="instructions">
-        <p>Upload a CSV file with German vocabulary. Format: <br>
+        <p>Paste your German vocabulary data below. Format: <br>
         <code>word with forms, Example sentence 1. Example sentence 2.</code></p>
     </div>
 
+    <div class="textarea-container">
+        <textarea id="csvData" placeholder="Paste your vocabulary data here..."></textarea>
+    </div>
+
     <div class="action-buttons">
-        <button class="upload-btn" onclick="document.getElementById('fileInput').click()">Upload CSV File</button>
-        <input type="file" id="fileInput" accept=".csv,.txt" onchange="handleFileUpload(event)">
+        <button class="process-btn" onclick="processData()">Process Data</button>
         <button class="clear-btn" onclick="clearCards()">Clear Cards</button>
         <button class="sample-btn" onclick="loadSampleData()">Load Sample Data</button>
     </div>
 
     <div id="cardsContainer" class="no-cards">
-        <p>Upload a CSV file to see vocabulary cards</p>
+        <p>Enter vocabulary data to see cards</p>
     </div>
 
     <script>
-        function handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const content = e.target.result;
-                processCSVData(content);
-            };
-            reader.readAsText(file);
+        function processData() {
+            const csvData = document.getElementById('csvData').value;
+            if (!csvData.trim()) {
+                alert('Please enter some vocabulary data');
+                return;
+            }
+            processCSVData(csvData);
         }
 
         function processCSVData(csv) {
@@ -146,7 +155,7 @@
             cardsContainer.className = '';
 
             if (lines.length === 0) {
-                cardsContainer.innerHTML = '<p>No data found in the CSV file</p>';
+                cardsContainer.innerHTML = '<p>No data found in the input</p>';
                 cardsContainer.className = 'no-cards';
                 return;
             }
@@ -224,18 +233,19 @@
 
         function clearCards() {
             const cardsContainer = document.getElementById('cardsContainer');
-            cardsContainer.innerHTML = '<p>Upload a CSV file to see vocabulary cards</p>';
+            cardsContainer.innerHTML = '<p>Enter vocabulary data to see cards</p>';
             cardsContainer.className = 'no-cards';
-            document.getElementById('fileInput').value = '';
+            document.getElementById('csvData').value = '';
         }
 
         function loadSampleData() {
             const sampleData = 
-`der Auftrag, Â¨-e 1. Ich komme im Auftrag von Frau Müller und soll Ihnen diesen Brief geben. 2. Im Moment hat die Firma besonders viele Aufträge.
+`der Auftrag, Ü-e 1. Ich komme im Auftrag von Frau Müller und soll Ihnen diesen Brief geben. 2. Im Moment hat die Firma besonders viele Aufträge.
 auftreten, tritt auf, trat auf, ist aufgetreten Nächste Woche tritt in der Stadthalle eine berühmte Musikgruppe auf.
 die Krankheit, -en Ich bin krank und gehe zum Arzt. Ich hoffe, dass meine Krankheit nicht schlimm ist.
 der Termin, -e 1. Ich habe morgen einen Termin beim Zahnarzt. 2. Wir müssen einen neuen Termin für das Meeting vereinbaren.`;
             
+            document.getElementById('csvData').value = sampleData;
             processCSVData(sampleData);
         }
 
