@@ -34,6 +34,7 @@
             margin-bottom: 15px;
             padding: 15px;
             transition: transform 0.3s ease;
+            position: relative;
         }
         .card:hover {
             transform: translateY(-3px);
@@ -57,6 +58,52 @@
             color: #3a66b7;
             font-weight: bold;
         }
+        .action-buttons {
+            display: flex;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .button {
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            border: none;
+            color: white;
+            font-weight: bold;
+        }
+        .upload-btn {
+            background-color: #3a66b7;
+        }
+        .clear-btn {
+            background-color: #e74c3c;
+        }
+        .sample-btn {
+            background-color: #27ae60;
+        }
+        #fileInput {
+            display: none;
+        }
+        #cardsContainer {
+            margin-top: 20px;
+        }
+        .no-cards {
+            text-align: center;
+            padding: 30px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .learned-checkbox {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+            vertical-align: middle;
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+        }
         .textarea-container {
             margin-bottom: 15px;
         }
@@ -69,45 +116,37 @@
             border-radius: 5px;
             font-family: monospace;
         }
-        .action-buttons {
+        .process-btn {
+            background-color: #3a66b7;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .note {
+            margin-top: 5px;
+            color: #666;
+            font-size: 0.9em;
+            font-style: italic;
+        }
+        .tab-container {
             display: flex;
             margin-bottom: 15px;
         }
-        .process-btn {
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            background-color: #ddd;
+            cursor: pointer;
+        }
+        .tab.active {
             background-color: #3a66b7;
             color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-right: 10px;
         }
-        .clear-btn {
-            background-color: #e74c3c;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
+        .tab-content {
+            display: none;
         }
-        .sample-btn {
-            background-color: #27ae60;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-left: auto;
-        }
-        #cardsContainer {
-            margin-top: 20px;
-        }
-        .no-cards {
-            text-align: center;
-            padding: 30px;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        .tab-content.active {
+            display: block;
         }
     </style>
 </head>
@@ -117,25 +156,66 @@
     </div>
 
     <div class="instructions">
-        <p>Paste your German vocabulary data below. Format: <br>
+        <p>Import your German vocabulary using CSV or sample data. Format: <br>
         <code>word with forms, Example sentence 1. Example sentence 2.</code></p>
     </div>
 
-    <div class="textarea-container">
-        <textarea id="csvData" placeholder="Paste your vocabulary data here..."></textarea>
+    <div class="tab-container">
+        <div class="tab active" onclick="switchTab('upload')">Upload CSV</div>
+        <div class="tab" onclick="switchTab('paste')">Paste Text</div>
     </div>
 
-    <div class="action-buttons">
-        <button class="process-btn" onclick="processData()">Process Data</button>
-        <button class="clear-btn" onclick="clearCards()">Clear Cards</button>
-        <button class="sample-btn" onclick="loadSampleData()">Load Sample Data</button>
+    <div id="uploadTab" class="tab-content active">
+        <div class="action-buttons">
+            <button class="button upload-btn" onclick="document.getElementById('fileInput').click()">Upload CSV File</button>
+            <input type="file" id="fileInput" accept=".csv,.txt" onchange="handleFileUpload(event)">
+            <button class="button clear-btn" onclick="clearCards()">Clear Cards</button>
+            <button class="button sample-btn" onclick="loadSampleData()">Load Sample Data</button>
+        </div>
+        <div class="note">Note: Due to browser security, progress cannot be saved between sessions when using local files.</div>
+    </div>
+
+    <div id="pasteTab" class="tab-content">
+        <div class="textarea-container">
+            <textarea id="csvData" placeholder="Paste your vocabulary data here..."></textarea>
+            <button class="button process-btn" onclick="processData()">Process Data</button>
+        </div>
     </div>
 
     <div id="cardsContainer" class="no-cards">
-        <p>Enter vocabulary data to see cards</p>
+        <p>Import vocabulary data to see cards</p>
     </div>
 
     <script>
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            
+            // Activate tab button
+            const tabIndex = tabName === 'upload' ? 0 : 1;
+            document.querySelectorAll('.tab')[tabIndex].classList.add('active');
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                processCSVData(content);
+            };
+            reader.readAsText(file);
+        }
+
         function processData() {
             const csvData = document.getElementById('csvData').value;
             if (!csvData.trim()) {
@@ -189,10 +269,25 @@
             const card = document.createElement('div');
             card.className = 'card';
             
+            const cardHeader = document.createElement('div');
+            cardHeader.className = 'card-header';
+            
+            // Add checkbox (but it won't persist)
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'learned-checkbox';
+            checkbox.addEventListener('change', function() {
+                card.style.backgroundColor = this.checked ? '#e8f5e9' : 'white';
+                card.style.borderLeft = this.checked ? '4px solid #4caf50' : 'none';
+            });
+            
             const wordElement = document.createElement('div');
             wordElement.className = 'word';
             wordElement.textContent = word;
-            card.appendChild(wordElement);
+            
+            cardHeader.appendChild(checkbox);
+            cardHeader.appendChild(wordElement);
+            card.appendChild(cardHeader);
             
             // Process examples (numbered with periods)
             if (exampleText) {
@@ -200,7 +295,6 @@
                 examplesElement.className = 'example';
                 
                 // Find and format numbered examples (1., 2., etc.)
-                let formattedExample = exampleText;
                 const regex = /(\d+\.)/g;
                 let examples = exampleText.split(regex).filter(part => part.trim() !== '');
                 
@@ -233,8 +327,9 @@
 
         function clearCards() {
             const cardsContainer = document.getElementById('cardsContainer');
-            cardsContainer.innerHTML = '<p>Enter vocabulary data to see cards</p>';
+            cardsContainer.innerHTML = '<p>Import vocabulary data to see cards</p>';
             cardsContainer.className = 'no-cards';
+            document.getElementById('fileInput').value = '';
             document.getElementById('csvData').value = '';
         }
 
@@ -245,14 +340,11 @@ auftreten, tritt auf, trat auf, ist aufgetreten Nächste Woche tritt in der Stad
 die Krankheit, -en Ich bin krank und gehe zum Arzt. Ich hoffe, dass meine Krankheit nicht schlimm ist.
 der Termin, -e 1. Ich habe morgen einen Termin beim Zahnarzt. 2. Wir müssen einen neuen Termin für das Meeting vereinbaren.`;
             
-            document.getElementById('csvData').value = sampleData;
             processCSVData(sampleData);
+            
+            // Also fill the textarea in case user switches tabs
+            document.getElementById('csvData').value = sampleData;
         }
-
-        // Load sample data when the page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            loadSampleData();
-        });
     </script>
 </body>
 </html>
